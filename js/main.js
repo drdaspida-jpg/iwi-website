@@ -3,9 +3,17 @@
    Handles: loader, sticky header, mobile nav, hero slider,
    counters, testimonial slider, gallery lightbox, back-to-top,
    newsletter + contact form feedback, donate tier toggle,
-   impact bar animation.
+   impact bar animation, and shared logo path fallback.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
+
+  /* ---------- Shared logo path ----------
+     The logo is stored in the repository inside the project image
+     folder. Update all page logos before the loader is displayed. */
+  var iwiLogo = 'images/Imperial%20Women%20Initiative/logo2.png';
+  document.querySelectorAll('img[src="images/logo.png"], img[src="/images/logo.png"]').forEach(function (img) {
+    img.src = iwiLogo;
+  });
 
   /* ---------- Page loader ---------- */
   var loader = document.querySelector('.page-loader');
@@ -127,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
     lightbox.innerHTML = '<button class="lightbox-close" aria-label="Close">&times;</button><img alt="">';
     document.body.appendChild(lightbox);
     var lbImg = lightbox.querySelector('img');
-    var closeLb = function () { lightbox.classList.remove('open'); }; 
+    var closeLb = function () { lightbox.classList.remove('open'); };
     lightbox.querySelector('.lightbox-close').addEventListener('click', closeLb);
     lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLb(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLb(); });
