@@ -3,18 +3,9 @@
    Handles: loader, sticky header, mobile nav, hero slider,
    counters, testimonial slider, gallery lightbox, back-to-top,
    newsletter + contact form feedback, donate tier toggle,
-   impact bar animation, and shared logo path fallback.
+   impact bar animation, site credit.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
-
-  /* ---------- Shared logo path ----------
-     The logo is stored in the repository inside the project image
-     folder. Update all page logos before the loader is displayed. */
-  var iwiLogo = 'images/Imperial%20Women%20Initiative/logo2.png';
-  document.querySelectorAll('img[src="images/logo.png"], img[src="/images/logo.png"]').forEach(function (img) {
-    img.src = iwiLogo;
-  });
-
   /* ---------- Page loader ---------- */
   var loader = document.querySelector('.page-loader');
   if (loader) {
@@ -41,8 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (navToggle && mainNav) {
     navToggle.addEventListener('click', function () {
       mainNav.classList.toggle('open');
-      var expanded = mainNav.classList.contains('open');
-      navToggle.setAttribute('aria-expanded', expanded);
+      navToggle.setAttribute('aria-expanded', mainNav.classList.contains('open'));
     });
     mainNav.querySelectorAll('a').forEach(function (link) {
       link.addEventListener('click', function () { mainNav.classList.remove('open'); });
@@ -86,14 +76,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var el = entry.target;
         var target = parseInt(el.getAttribute('data-count'), 10) || 0;
         var suffix = el.getAttribute('data-suffix') || '';
-        var start = 0;
-        var duration = 1400;
-        var startTime = null;
+        var duration = 1400, startTime = null;
         function tick(ts) {
           if (!startTime) startTime = ts;
           var progress = Math.min((ts - startTime) / duration, 1);
-          var value = Math.floor(start + (target - start) * progress);
-          el.textContent = value.toLocaleString() + suffix;
+          el.textContent = Math.floor(target * progress).toLocaleString() + suffix;
           if (progress < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -106,17 +93,14 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Testimonials ---------- */
   var testimonialSlides = document.querySelectorAll('.testimonial-slide');
   if (testimonialSlides.length) {
-    var tCurrent = 0;
-    var tDotsWrap = document.querySelector('.testimonial-dots');
-    var tDots = [];
+    var tCurrent = 0, tDotsWrap = document.querySelector('.testimonial-dots'), tDots = [];
     testimonialSlides.forEach(function (s, i) {
       if (tDotsWrap) {
         var d = document.createElement('button');
         d.className = i === 0 ? 'is-active' : '';
         d.setAttribute('aria-label', 'Go to testimonial ' + (i + 1));
         d.addEventListener('click', function () { showTestimonial(i); });
-        tDotsWrap.appendChild(d);
-        tDots.push(d);
+        tDotsWrap.appendChild(d); tDots.push(d);
       }
     });
     function showTestimonial(index) {
@@ -130,19 +114,23 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Gallery lightbox ---------- */
   var galleryItems = document.querySelectorAll('[data-lightbox], .gallery-item img');
   if (galleryItems.length) {
-    var lightbox = document.createElement('div');
-    lightbox.className = 'lightbox';
-    lightbox.innerHTML = '<button class="lightbox-close" aria-label="Close">&times;</button><img alt="">';
-    document.body.appendChild(lightbox);
+    var lightbox = document.querySelector('.lightbox');
+    if (!lightbox) {
+      lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      lightbox.innerHTML = '<button class="lightbox-close" aria-label="Close">&times;</button><img alt="">';
+      document.body.appendChild(lightbox);
+    }
     var lbImg = lightbox.querySelector('img');
     var closeLb = function () { lightbox.classList.remove('open'); };
-    lightbox.querySelector('.lightbox-close').addEventListener('click', closeLb);
+    var closeButton = lightbox.querySelector('.lightbox-close');
+    if (closeButton) closeButton.addEventListener('click', closeLb);
     lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLb(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLb(); });
     galleryItems.forEach(function (item) {
       item.addEventListener('click', function () {
-        var src = item.getAttribute('data-lightbox') || (item.tagName === 'IMG' ? item.src : item.querySelector('img')?.src);
-        if (src) { lbImg.src = src; lightbox.classList.add('open'); }
+        var src = item.getAttribute('data-lightbox') || (item.tagName === 'IMG' ? item.src : (item.querySelector('img') && item.querySelector('img').src));
+        if (src && lbImg) { lbImg.src = src; lightbox.classList.add('open'); }
       });
     });
   }
@@ -161,8 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var button = form.querySelector('button[type="submit"]');
       if (button) {
         var old = button.textContent;
-        button.textContent = 'Thank you!';
-        button.disabled = true;
+        button.textContent = 'Thank you!'; button.disabled = true;
         setTimeout(function () { button.textContent = old; button.disabled = false; form.reset(); }, 2500);
       }
     });
@@ -173,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
     button.addEventListener('click', function () {
       var amount = button.getAttribute('data-donate-tier');
       var input = document.querySelector('[name="amount"], #amount');
-      if (input) { input.value = amount; input.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (input) input.value = amount;
     });
   });
 
@@ -188,5 +175,15 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }, { threshold: 0.25 });
     bars.forEach(function (bar) { barObserver.observe(bar); });
+  }
+
+  /* ---------- Professional site credit on every standard page ---------- */
+  var footerBottom = document.querySelector('.footer-bottom');
+  if (footerBottom && !footerBottom.querySelector('.daspida-credit')) {
+    var credit = document.createElement('span');
+    credit.className = 'daspida-credit';
+    credit.innerHTML = 'Website created by <a href="https://drdaspida-jpg.github.io/" target="_blank" rel="noopener noreferrer">Daspida Media Network</a>';
+    credit.style.cssText = 'display:inline-block;margin-top:8px;font-size:.78rem;letter-spacing:.03em;opacity:.82;';
+    footerBottom.appendChild(credit);
   }
 });
