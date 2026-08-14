@@ -1,9 +1,9 @@
 /* ============================================================
    IMPERIAL WOMEN INITIATIVE — MAIN SCRIPT
-   Handles site interactions and GitHub Pages asset compatibility.
+   Site interactions + reliable GitHub Pages media handling.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
-  /* ---------- Fix site logo paths ---------- */
+  /* ---------- Logo compatibility ---------- */
   var LOGO = 'images/Imperial Women Initiative/logo2.png';
   document.querySelectorAll('img').forEach(function (img) {
     var src = img.getAttribute('src') || '';
@@ -27,14 +27,12 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Sticky header ---------- */
   var header = document.querySelector('.site-header');
   if (header) {
-    var onScroll = function () {
-      header.classList.toggle('is-scrolled', window.scrollY > 40);
-    };
+    var onScroll = function () { header.classList.toggle('is-scrolled', window.scrollY > 40); };
     document.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
   }
 
-  /* ---------- Mobile nav toggle ---------- */
+  /* ---------- Mobile nav ---------- */
   var navToggle = document.querySelector('.nav-toggle');
   var mainNav = document.querySelector('.main-nav');
   if (navToggle && mainNav) {
@@ -50,9 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Hero slider ---------- */
   var slides = document.querySelectorAll('.hero-slide');
   if (slides.length) {
-    var current = 0;
-    var dotsWrap = document.querySelector('.hero-dots');
-    var dots = [];
+    var current = 0, dotsWrap = document.querySelector('.hero-dots'), dots = [];
     slides.forEach(function (s, i) {
       if (dotsWrap) {
         var d = document.createElement('button');
@@ -67,8 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
       slides.forEach(function (s, i) { s.classList.toggle('is-active', i === current); });
       dots.forEach(function (d, i) { d.classList.toggle('is-active', i === current); });
     }
-    var prev = document.querySelector('.hero-prev');
-    var next = document.querySelector('.hero-next');
+    var prev = document.querySelector('.hero-prev'), next = document.querySelector('.hero-next');
     if (prev) prev.addEventListener('click', function () { showSlide(current - 1); });
     if (next) next.addEventListener('click', function () { showSlide(current + 1); });
     setInterval(function () { showSlide(current + 1); }, 6000);
@@ -80,10 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var counterObserver = new IntersectionObserver(function (entries, obs) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
-        var el = entry.target;
-        var target = parseInt(el.getAttribute('data-count'), 10) || 0;
-        var suffix = el.getAttribute('data-suffix') || '';
-        var duration = 1400, startTime = null;
+        var el = entry.target, target = parseInt(el.getAttribute('data-count'), 10) || 0;
+        var suffix = el.getAttribute('data-suffix') || '', duration = 1400, startTime = null;
         function tick(ts) {
           if (!startTime) startTime = ts;
           var progress = Math.min((ts - startTime) / duration, 1);
@@ -117,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(function () { showTestimonial(tCurrent + 1); }, 7000);
   }
 
-  /* ---------- Gallery lightbox ---------- */
+  /* ---------- Gallery image lightbox ---------- */
   var galleryItems = document.querySelectorAll('[data-lightbox], .gallery-item img');
   if (galleryItems.length) {
     var lightbox = document.querySelector('.lightbox');
@@ -141,26 +134,34 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* ---------- Video compatibility ---------- */
+  /* ---------- Video handling ----------
+     Keep the MP4 native. Do not rewrite or repeatedly call load() on desktop.
+     GitHub Pages serves this asset directly and the native <video> element
+     handles seeking/range requests correctly. Add a useful fallback only
+     after an actual media error. ---------- */
   document.querySelectorAll('video').forEach(function (video) {
+    video.setAttribute('playsinline', '');
+    video.setAttribute('controls', '');
+    video.setAttribute('preload', 'metadata');
     var source = video.querySelector('source');
     if (!source) return;
     var src = source.getAttribute('src') || '';
-    if (src.indexOf('lv_0_20250819202236.mp4') !== -1) {
-      var absolute = new URL(src, window.location.href).href;
-      source.setAttribute('src', absolute);
-      video.load();
-      video.addEventListener('error', function () {
-        var existing = video.parentElement && video.parentElement.querySelector('.video-fallback');
-        if (!existing) {
-          var fallback = document.createElement('p');
-          fallback.className = 'video-fallback';
-          fallback.style.cssText = 'text-align:center;margin:14px 0 0;';
-          fallback.innerHTML = '<a href="' + absolute + '" target="_blank" rel="noopener">Open the video directly</a>';
-          video.insertAdjacentElement('afterend', fallback);
-        }
-      });
-    }
+    if (src.indexOf('lv_0_20250819202236.mp4') === -1) return;
+
+    video.addEventListener('error', function () {
+      var existing = video.parentElement && video.parentElement.querySelector('.video-fallback');
+      if (existing) return;
+      var fallback = document.createElement('div');
+      fallback.className = 'video-fallback';
+      fallback.style.cssText = 'text-align:center;margin:12px 0;padding:10px;';
+      var link = document.createElement('a');
+      link.href = new URL(src, window.location.href).href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Open the video directly';
+      fallback.appendChild(link);
+      video.insertAdjacentElement('afterend', fallback);
+    });
   });
 
   /* ---------- Back to top ---------- */
@@ -170,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
     topBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
   }
 
-  /* ---------- Form feedback ---------- */
+  /* ---------- Forms ---------- */
   document.querySelectorAll('[data-form]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
