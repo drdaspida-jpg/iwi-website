@@ -1,14 +1,23 @@
 /* ============================================================
    IMPERIAL WOMEN INITIATIVE — MAIN SCRIPT
-   Handles: loader, sticky header, mobile nav, hero slider,
-   counters, testimonial slider, gallery lightbox, back-to-top,
-   newsletter + contact form feedback, donate tier toggle,
-   impact bar animation, site credit.
+   Handles site interactions and GitHub Pages asset compatibility.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
+  /* ---------- Fix site logo paths ---------- */
+  var LOGO = 'images/Imperial Women Initiative/logo2.png';
+  document.querySelectorAll('img').forEach(function (img) {
+    var src = img.getAttribute('src') || '';
+    if (src === 'images/logo.png' || src.endsWith('/images/logo.png')) img.setAttribute('src', LOGO);
+  });
+  document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(function (link) {
+    link.setAttribute('href', LOGO);
+  });
+
   /* ---------- Page loader ---------- */
   var loader = document.querySelector('.page-loader');
   if (loader) {
+    var loaderImg = loader.querySelector('img');
+    if (loaderImg) loaderImg.src = LOGO;
     window.addEventListener('load', function () {
       setTimeout(function () { loader.classList.add('is-hidden'); }, 250);
     });
@@ -19,8 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var header = document.querySelector('.site-header');
   if (header) {
     var onScroll = function () {
-      if (window.scrollY > 40) header.classList.add('is-scrolled');
-      else header.classList.remove('is-scrolled');
+      header.classList.toggle('is-scrolled', window.scrollY > 40);
     };
     document.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -51,8 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
         d.className = i === 0 ? 'is-active' : '';
         d.setAttribute('aria-label', 'Go to slide ' + (i + 1));
         d.addEventListener('click', function () { showSlide(i); });
-        dotsWrap.appendChild(d);
-        dots.push(d);
+        dotsWrap.appendChild(d); dots.push(d);
       }
     });
     function showSlide(index) {
@@ -83,8 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
           el.textContent = Math.floor(target * progress).toLocaleString() + suffix;
           if (progress < 1) requestAnimationFrame(tick);
         }
-        requestAnimationFrame(tick);
-        obs.unobserve(el);
+        requestAnimationFrame(tick); obs.unobserve(el);
       });
     }, { threshold: 0.35 });
     counters.forEach(function (c) { counterObserver.observe(c); });
@@ -135,6 +141,28 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* ---------- Video compatibility ---------- */
+  document.querySelectorAll('video').forEach(function (video) {
+    var source = video.querySelector('source');
+    if (!source) return;
+    var src = source.getAttribute('src') || '';
+    if (src.indexOf('lv_0_20250819202236.mp4') !== -1) {
+      var absolute = new URL(src, window.location.href).href;
+      source.setAttribute('src', absolute);
+      video.load();
+      video.addEventListener('error', function () {
+        var existing = video.parentElement && video.parentElement.querySelector('.video-fallback');
+        if (!existing) {
+          var fallback = document.createElement('p');
+          fallback.className = 'video-fallback';
+          fallback.style.cssText = 'text-align:center;margin:14px 0 0;';
+          fallback.innerHTML = '<a href="' + absolute + '" target="_blank" rel="noopener">Open the video directly</a>';
+          video.insertAdjacentElement('afterend', fallback);
+        }
+      });
+    }
+  });
+
   /* ---------- Back to top ---------- */
   var topBtn = document.querySelector('.back-to-top');
   if (topBtn) {
@@ -177,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
     bars.forEach(function (bar) { barObserver.observe(bar); });
   }
 
-  /* ---------- Professional site credit on every standard page ---------- */
+  /* ---------- Professional site credit ---------- */
   var footerBottom = document.querySelector('.footer-bottom');
   if (footerBottom && !footerBottom.querySelector('.daspida-credit')) {
     var credit = document.createElement('span');
